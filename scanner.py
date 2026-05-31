@@ -6,7 +6,6 @@ Run once per invocation — GitHub Actions handles the scheduling.
 
 import json
 import os
-import re
 import smtplib
 import sys
 from datetime import datetime
@@ -19,14 +18,23 @@ from bs4 import BeautifulSoup
 
 # ==============================================================
 #  CONFIG
-#  Do NOT put real credentials here.
-#  Set these as GitHub Secrets (see README) and they are
-#  injected automatically as environment variables at runtime.
+#  All values come from GitHub Secrets — never hardcoded here.
+#  Set these in: repo Settings → Secrets and variables → Actions
+#
+#  WATCH_DATES        e.g.  2026-06-18,2026-06-19
+#  GMAIL_FROM         your Gmail address
+#  GMAIL_TO           address to receive alerts (can be same)
+#  GMAIL_APP_PASSWORD 16-character Gmail app password
 # ==============================================================
 
-WATCH_DATES =  os.environ["WATCH_DATES"]
+# Comma-separated list of dates from GitHub Secret
+# e.g. secret value: "2026-06-18,2026-06-19"
+WATCH_DATES = [
+    d.strip()
+    for d in os.environ["WATCH_DATES"].split(",")
+    if d.strip()
+]
 
-# Read from GitHub Secrets — set these in your repo settings
 GMAIL_FROM         = os.environ["GMAIL_FROM"]
 GMAIL_TO           = os.environ["GMAIL_TO"]
 GMAIL_APP_PASSWORD = os.environ["GMAIL_APP_PASSWORD"]
@@ -140,7 +148,7 @@ def build_email(date_str: str, slots: list[dict]) -> tuple[str, str]:
     subject  = f"Eurostar Snap available — {friendly}!"
 
     slot_lines = "\n".join(
-        f"  • {s['time']}   £{s['price']}   ({s['seats']} seats left)"
+        f"  * {s['time']}   £{s['price']}   ({s['seats']} seats left)"
         for s in slots
     )
     book_url = SEARCH_URL.format(date=date_str)
@@ -164,30 +172,26 @@ def main():
     print(f"\n[{now}] Eurostar Snap scanner")
     print(f"Watching: {', '.join(WATCH_DATES)}\n")
 
-    found_any = False
-
     for date_str in WATCH_DATES:
         print(f"Checking {date_str}...")
         slots = fetch_availability(date_str)
 
         if not slots:
-            print("  → Not available\n")
+            print("  -> Not available\n")
             continue
 
-        found_any = True
         for s in slots:
-            print(f"  → AVAILABLE: {s['time']}  £{s['price']}  ({s['seats']} seats)")
+            print(f"  -> AVAILABLE: {s['time']}  £{s['price']}  ({s['seats']} seats)")
 
         subject, body = build_email(date_str, slots)
-        print("  → Sending email...")
+        print("  -> Sending email...")
         if send_email(subject, body):
-            print("  → Email sent!\n")
+            print("  -> Email sent!\n")
         else:
-            print("  → Email failed\n")
-            sys.exit(1)  # causes GitHub Actions to flag the run as failed
+            print("  -> Email failed\n")
+            sys.exit(1)
 
-    if not found_any:
-        print("No availability found on any watched date.")
+    print("Done.")
 
 
 if __name__ == "__main__":
