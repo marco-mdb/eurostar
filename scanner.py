@@ -25,8 +25,8 @@ from bs4 import BeautifulSoup
 # ==============================================================
 
 WATCH_DATES = [
-    "2026-06-10",
-    "2026-06-13",
+    "2026-06-18",
+    "2026-06-19",
 ]
 
 # Read from GitHub Secrets — set these in your repo settings
@@ -93,8 +93,15 @@ def fetch_availability(date_str: str) -> list[dict]:
         if not slot.get("id", "").startswith(date_str):
             continue
 
-        fare   = slot.get("fare", {})
-        window = slot.get("departureWindow", {})
+        fare   = slot.get("fare") or {}
+        window = slot.get("departureWindow") or {}
+
+        # Skip slots with no fare data — not yet bookable
+        prices = fare.get("prices") or {}
+        price  = prices.get("displayPrice")
+        if price is None:
+            print(f"  Skipping slot {slot.get('id')} — no price data yet")
+            continue
 
         earliest   = window.get("earliest", "")[-5:]
         latest     = window.get("latest",   "")[-5:]
@@ -102,7 +109,7 @@ def fetch_availability(date_str: str) -> list[dict]:
 
         available.append({
             "time":  time_label,
-            "price": fare.get("prices", {}).get("displayPrice"),
+            "price": price,
             "seats": fare.get("seats"),
         })
 
