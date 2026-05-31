@@ -2,7 +2,7 @@ name: Eurostar Snap Scanner
 
 on:
   schedule:
-    - cron: '40 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
