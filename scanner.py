@@ -24,10 +24,7 @@ from bs4 import BeautifulSoup
 #  injected automatically as environment variables at runtime.
 # ==============================================================
 
-WATCH_DATES = [
-    "2026-06-18",
-    "2026-06-19",
-]
+WATCH_DATES =  os.environ["WATCH_DATES"]
 
 # Read from GitHub Secrets — set these in your repo settings
 GMAIL_FROM         = os.environ["GMAIL_FROM"]
