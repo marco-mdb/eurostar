@@ -2,10 +2,7 @@ name: Eurostar Snap Scanner
 
 on:
   schedule:
-    # Runs every 5 minutes
-    # GitHub Actions minimum is 5 minutes
-    - cron: '*/60 * * * *'
-  # Also lets you trigger it manually from the Actions tab
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -26,6 +23,7 @@ jobs:
 
       - name: Run scanner
         env:
+          WATCH_DATES: ${{ secrets.WATCH_DATES }}
           GMAIL_FROM: ${{ secrets.GMAIL_FROM }}
           GMAIL_TO: ${{ secrets.GMAIL_TO }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
